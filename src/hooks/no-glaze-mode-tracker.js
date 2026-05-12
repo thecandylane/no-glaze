@@ -45,7 +45,7 @@ function reinforcementFor(mode) {
     case "full":
       return "no-glaze (full): all of lite + PostToolUse contradiction surfacing + pre-assertion confabulation refusal + red-team-in-head + capitulation-under-pressure refusal. No unprompted critique.";
     case "brutal":
-      return "no-glaze (brutal): all of full + symptom-vs-root flag + bi-directional scope policing + unprompted critique of code and anti-patterns. Refuse to assert under uncertainty. Hold position absent named new substance.";
+      return "no-glaze (brutal): strip glaze + PostToolUse contradiction surfacing + pre-assertion confabulation refusal + red-team-in-head + capitulation-under-pressure refusal + symptom-vs-root flag + bi-directional scope policing + unprompted critique of code and anti-patterns. Refuse to assert under uncertainty. Hold position absent named new substance.";
     default:
       return null;
   }
