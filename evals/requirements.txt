@@ -1,0 +1,3 @@
+# Petri 0.1.0 from Meridian Labs's maintained branch (Anthropic original at safety-research/petri).
+# Pulls in inspect-ai, anthropic SDK, openai SDK, google-genai, click, rapidfuzz, ipywidgets.
+petri @ git+https://github.com/meridianlabs-ai/inspect_petri@petri-v2
