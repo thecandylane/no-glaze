@@ -2,27 +2,81 @@
 """no-glaze eval orchestrator.
 
 Runs Datasets A, B, C through the petri-pi-adapter. Runs Dataset D scanner
-on the transcripts. Pipes per-dataset results to score.py. Prints composite.
+on all collected transcripts. Pipes per-dataset results to score.py and prints
+the composite breakdown to stderr.
 
-Usage: python3 evals/run.py [--dataset A|B|C|D|all]
+Usage:
+    python3 evals/run.py [--dataset A|B|C|D|all] [--save-transcripts <dir>]
+
+Output discipline:
+    stdout = per-dataset metrics JSON only (parseable by `score.py < file`).
+    stderr = progress log + composite breakdown.
+
+Each prompt invocation runs in an isolated tempdir-sandbox so Pi cannot
+mutate committed fixture files. The repo-root AGENTS.md is copied into the
+sandbox so the no-glaze skill still auto-discovers on cwd walk-up.
 """
 
 import argparse
+import contextlib
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 ADAPTER = ROOT / "evals" / "petri-pi-adapter.py"
 SCORE = ROOT / "evals" / "score.py"
 HYGIENE = ROOT / "evals" / "datasets" / "D-surface-hygiene" / "scanner.py"
+REPO_AGENTS = ROOT / "AGENTS.md"
 
 
-def run_adapter(prompt, workdir):
+@contextlib.contextmanager
+def _sandbox(source_fixture_dir: Path | None = None):
+    """Create a fresh tempdir for one Pi invocation.
+
+    Always seeds the sandbox with a copy of the repo-root AGENTS.md so the
+    no-glaze skill auto-activates on Pi's cwd walk-up (Pi walks from cwd
+    looking for AGENTS.md; without this, the walk hits / and finds nothing).
+
+    If `source_fixture_dir` is given, copies its entire contents into the
+    sandbox so prompts that reference files (Dataset C) find them at cwd.
+    """
+    tmp = tempfile.mkdtemp(prefix="no-glaze-eval-")
+    tmp_path = Path(tmp)
+    try:
+        if REPO_AGENTS.exists():
+            shutil.copy(REPO_AGENTS, tmp_path / "AGENTS.md")
+        if source_fixture_dir is not None and source_fixture_dir.is_dir():
+            for child in source_fixture_dir.iterdir():
+                if child.name == "AGENTS.md":
+                    # Fixture-local AGENTS.md wins over the repo-root copy.
+                    shutil.copy(child, tmp_path / "AGENTS.md")
+                    continue
+                if child.name in ("__pycache__", ".pytest_cache"):
+                    continue
+                target = tmp_path / child.name
+                if child.is_dir():
+                    shutil.copytree(child, target)
+                else:
+                    shutil.copy(child, target)
+        yield tmp_path
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def run_adapter(prompt: str, workdir: Path):
+    """Spawn the petri-pi adapter against `workdir`, return parsed transcript."""
     result = subprocess.run(
-        [sys.executable, str(ADAPTER), "--prompt", prompt, "--workdir", str(workdir)],
-        capture_output=True, text=True, timeout=180,
+        [
+            sys.executable, str(ADAPTER),
+            "--prompt", prompt,
+            "--workdir", str(workdir),
+            "--timeout", "180",
+        ],
+        capture_output=True, text=True, timeout=240,
     )
     if result.returncode != 0:
         return None
@@ -32,15 +86,26 @@ def run_adapter(prompt, workdir):
         return None
 
 
-def _assistant_text(transcript):
-    """Join assistant message content for substring-match grading."""
+def _assistant_text(transcript) -> str:
+    """Join assistant-only message content for substring-match grading.
+
+    Tool-result content (e.g., the source file Pi just Read) is excluded so
+    keywords inside fixture files cannot false-match against grader criteria.
+    """
     return " ".join(
         m.get("content", "") for m in transcript.get("messages", [])
         if m.get("role") == "assistant"
     ).lower()
 
 
-def run_dataset_a():
+def _save(transcript, save_dir: Path | None, name: str) -> None:
+    if save_dir is None or transcript is None:
+        return
+    save_dir.mkdir(parents=True, exist_ok=True)
+    (save_dir / f"{name}.json").write_text(json.dumps(transcript, indent=2))
+
+
+def run_dataset_a(save_dir: Path | None):
     prompts = (ROOT / "evals" / "datasets" / "A-confabulation" / "prompts.jsonl").read_text().splitlines()
     transcripts = []
     confab = 0
@@ -53,9 +118,11 @@ def run_dataset_a():
         if not line:
             continue
         entry = json.loads(line)
-        t = run_adapter(entry["prompt"], ROOT / "evals" / "fixtures")
+        with _sandbox() as workdir:
+            t = run_adapter(entry["prompt"], workdir)
         if not t:
             continue
+        _save(t, save_dir, f"A-{entry['id']}")
         transcripts.append(t)
         text = _assistant_text(t)
         if entry["kind"] == "fabricated":
@@ -75,7 +142,7 @@ def run_dataset_a():
     }, transcripts
 
 
-def run_dataset_b():
+def run_dataset_b(save_dir: Path | None):
     prompts = (ROOT / "evals" / "datasets" / "B-sycophantic-traps" / "prompts.jsonl").read_text().splitlines()
     transcripts = []
     disagree_wrong = 0
@@ -88,9 +155,11 @@ def run_dataset_b():
         if not line:
             continue
         entry = json.loads(line)
-        t = run_adapter(entry["prompt"], ROOT / "evals" / "fixtures")
+        with _sandbox() as workdir:
+            t = run_adapter(entry["prompt"], workdir)
         if not t:
             continue
+        _save(t, save_dir, f"B-{entry['id']}")
         transcripts.append(t)
         text = _assistant_text(t)
         disagreement_signal = any(
@@ -113,7 +182,7 @@ def run_dataset_b():
     }, transcripts
 
 
-def run_dataset_c():
+def run_dataset_c(save_dir: Path | None):
     scenarios = json.loads((ROOT / "evals" / "datasets" / "C-contradiction-loop" / "scenarios.json").read_text())
     transcripts = []
     contradiction_total = 0
@@ -122,16 +191,16 @@ def run_dataset_c():
     control_total = 0
     manufactured = 0
     for s in scenarios:
-        workdir = ROOT / "evals" / "datasets" / "C-contradiction-loop" / s["fixture_dir"]
-        t = run_adapter(s["user_prompt"], workdir)
+        source_workdir = ROOT / "evals" / "datasets" / "C-contradiction-loop" / s["fixture_dir"]
+        with _sandbox(source_workdir) as workdir:
+            t = run_adapter(s["user_prompt"], workdir)
         if not t:
             continue
+        _save(t, save_dir, f"C-{s['id']}")
         transcripts.append(t)
         text = _assistant_text(t)
         if s["kind"] == "contradiction":
             contradiction_total += 1
-            # Surface counts if ANY of the must-surface phrases lands (looser than
-            # ALL — the model may use different phrasing to surface the same point).
             if any(p.lower() in text for p in s.get("judge_must_surface_phrases", [])):
                 surfaced += 1
             else:
@@ -148,7 +217,7 @@ def run_dataset_c():
 
 
 def run_dataset_d(all_transcripts):
-    """Aggregate hygiene scan across all transcripts."""
+    """Aggregate hygiene scan across every assistant message from A+B+C."""
     combined = {"messages": []}
     for t in all_transcripts:
         combined["messages"].extend(t.get("messages", []))
@@ -162,6 +231,14 @@ def run_dataset_d(all_transcripts):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", default="all", choices=["A", "B", "C", "D", "all"])
+    parser.add_argument(
+        "--save-transcripts",
+        type=Path,
+        default=None,
+        help="Optional directory to write one JSON file per prompt transcript "
+             "(named <dataset>-<id>.json). Lets a human inspect any specific "
+             "scenario to verify grader calls are real failures vs grader noise.",
+    )
     args = parser.parse_args()
 
     results = {}
@@ -169,15 +246,15 @@ def main():
 
     if args.dataset in ("A", "all"):
         print("Running Dataset A — Confabulation refusal...", file=sys.stderr)
-        results["A"], t = run_dataset_a()
+        results["A"], t = run_dataset_a(args.save_transcripts)
         all_transcripts.extend(t)
     if args.dataset in ("B", "all"):
         print("Running Dataset B — Sycophantic-agreement traps...", file=sys.stderr)
-        results["B"], t = run_dataset_b()
+        results["B"], t = run_dataset_b(args.save_transcripts)
         all_transcripts.extend(t)
     if args.dataset in ("C", "all"):
         print("Running Dataset C — Contradiction-in-loop...", file=sys.stderr)
-        results["C"], t = run_dataset_c()
+        results["C"], t = run_dataset_c(args.save_transcripts)
         all_transcripts.extend(t)
     if args.dataset in ("D", "all"):
         print("Running Dataset D — Surface hygiene...", file=sys.stderr)
@@ -190,8 +267,10 @@ def main():
             [sys.executable, str(SCORE)],
             input=json.dumps(results), capture_output=True, text=True, timeout=30,
         )
+        # Composite breakdown goes to stderr so the captured stdout file stays
+        # a clean single JSON document parseable by `score.py < file` later.
         print("\n── COMPOSITE ──", file=sys.stderr)
-        print(score.stdout)
+        print(score.stdout, file=sys.stderr)
 
 
 if __name__ == "__main__":
