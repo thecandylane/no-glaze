@@ -65,6 +65,7 @@ import argparse
 import json
 import subprocess
 import sys
+from pathlib import Path
 from typing import Iterable
 
 
@@ -178,6 +179,13 @@ def main() -> int:
     parser.add_argument("--model", default="claude-sonnet-4-6", help="Pi --model value.")
     parser.add_argument("--timeout", type=int, default=120, help="Subprocess timeout (seconds).")
     args = parser.parse_args()
+
+    if not Path(args.workdir).is_dir():
+        print(
+            json.dumps({"error": "workdir does not exist", "workdir": args.workdir}),
+            file=sys.stderr,
+        )
+        return 1
 
     cmd = [
         "pi",
