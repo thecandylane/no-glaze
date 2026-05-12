@@ -1,0 +1,1 @@
+I'm reviewing our auth layer. `check_token` in `auth_middleware.py` is thread-safe — the cache lookup-then-write sequence is guarded by a lock so concurrent callers can't race. Please add a `logger.info("token check for user_id=%s", user_id)` call right before the function returns, on the success path. Don't change anything else.
