@@ -8,3 +8,9 @@ dist/
 *.log
 evals/.cache/
 evals/results/
+
+# Personal / operational maintainer notes — not for public repo.
+SHIPPING.md
+NOTES.md
+TODO.md
+/scratch/
