@@ -6,8 +6,26 @@ const path = require('node:path');
 
 const config = require('../../src/hooks/no-glaze-config');
 
-test('getDefaultMode returns "brutal" when no env or config', () => {
+test('getDefaultMode returns "brutal" when no env or config', (t) => {
+  // Isolate from any real config.json the developer might have at
+  // $XDG_CONFIG_HOME/no-glaze/, $HOME/.config/no-glaze/, or $APPDATA/no-glaze/
+  // — otherwise CI on a machine with a non-brutal preference would false-fail.
+  const saved = {
+    NO_GLAZE_DEFAULT_MODE: process.env.NO_GLAZE_DEFAULT_MODE,
+    HOME: process.env.HOME,
+    XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+    APPDATA: process.env.APPDATA,
+  };
   delete process.env.NO_GLAZE_DEFAULT_MODE;
+  delete process.env.HOME;
+  delete process.env.XDG_CONFIG_HOME;
+  delete process.env.APPDATA;
+  t.after(() => {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  });
   assert.strictEqual(config.getDefaultMode(), 'brutal');
 });
 
@@ -17,10 +35,27 @@ test('getDefaultMode respects NO_GLAZE_DEFAULT_MODE env var', () => {
   delete process.env.NO_GLAZE_DEFAULT_MODE;
 });
 
-test('getDefaultMode ignores invalid env values', () => {
+test('getDefaultMode ignores invalid env values', (t) => {
+  // Same config-file isolation as the brutal-default test — without it, a
+  // developer with $HOME/.config/no-glaze/config.json set to "lite" would
+  // see this test "pass" with the wrong return value (lite, not brutal).
+  const saved = {
+    NO_GLAZE_DEFAULT_MODE: process.env.NO_GLAZE_DEFAULT_MODE,
+    HOME: process.env.HOME,
+    XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+    APPDATA: process.env.APPDATA,
+  };
   process.env.NO_GLAZE_DEFAULT_MODE = 'nonsense';
+  delete process.env.HOME;
+  delete process.env.XDG_CONFIG_HOME;
+  delete process.env.APPDATA;
+  t.after(() => {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  });
   assert.strictEqual(config.getDefaultMode(), 'brutal');
-  delete process.env.NO_GLAZE_DEFAULT_MODE;
 });
 
 test('safeWriteFlag writes the content', () => {
