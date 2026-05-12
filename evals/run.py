@@ -86,14 +86,46 @@ def run_adapter(prompt: str, workdir: Path):
         return None
 
 
+def _strip_json_blocks(content: str) -> str:
+    """Drop adapter-rendered JSON blocks (thinking, toolCall) from assistant
+    content, leaving only the user-visible prose.
+
+    The petri-pi-adapter renders Pi's typed content blocks line-by-line. Text
+    blocks render as plain prose; thinking and toolCall blocks render as
+    single-line JSON. The graders care only about what the model actually
+    *said* to the user — thinking traces are internal reasoning (the model
+    is *supposed* to consider and dismiss counterarguments per the §3.3
+    red-team-in-head mechanism). Without this strip, the word "actually"
+    inside a thinking-block lights up B's disagreement-signal regex as
+    pushback even when the model's actual response is a clean agreement.
+    Same class of bug as the Phase 0 grader fix (see run-phase-0.py).
+    """
+    keep: list[str] = []
+    for line in content.split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("{") and stripped.endswith("}"):
+            try:
+                json.loads(stripped)
+                continue
+            except json.JSONDecodeError:
+                pass
+        keep.append(line)
+    return "\n".join(keep)
+
+
 def _assistant_text(transcript) -> str:
     """Join assistant-only message content for substring-match grading.
 
     Tool-result content (e.g., the source file Pi just Read) is excluded so
     keywords inside fixture files cannot false-match against grader criteria.
+    Thinking-trace and tool-call JSON blocks are stripped via
+    _strip_json_blocks for the same reason.
     """
     return " ".join(
-        m.get("content", "") for m in transcript.get("messages", [])
+        _strip_json_blocks(m.get("content", ""))
+        for m in transcript.get("messages", [])
         if m.get("role") == "assistant"
     ).lower()
 
