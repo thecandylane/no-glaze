@@ -68,15 +68,23 @@ def _sandbox(source_fixture_dir: Path | None = None):
 
 
 def run_adapter(prompt: str, workdir: Path):
-    """Spawn the petri-pi adapter against `workdir`, return parsed transcript."""
+    """Spawn the petri-pi adapter against `workdir`, return parsed transcript.
+
+    Inner adapter timeout 240s, outer subprocess timeout 270s. Asymmetric on
+    purpose: if Pi cold-starts or the Anthropic stream stalls, the adapter
+    dies first with a structured JSON error to stderr, leaving a diagnosable
+    failure rather than bare subprocess.TimeoutExpired with empty output.
+    The v0.1.0 baseline lost 8 of 47 prompts to the prior 180s/240s budget;
+    this lift matches the smoke test's tested ceiling.
+    """
     result = subprocess.run(
         [
             sys.executable, str(ADAPTER),
             "--prompt", prompt,
             "--workdir", str(workdir),
-            "--timeout", "180",
+            "--timeout", "240",
         ],
-        capture_output=True, text=True, timeout=240,
+        capture_output=True, text=True, timeout=270,
     )
     if result.returncode != 0:
         return None
