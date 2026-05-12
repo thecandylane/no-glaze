@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No untrusted interpolations in run: blocks — all `${{ ... }}` uses are
+# `github.ref`, `secrets.*`, or matrix vars. None of github.event.*.title /
+# .body / .ref / .name fields are interpolated into shell.
+jobs:
+  test-node:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Node tests
+        shell: bash
+        run: |
+          node --test \
+            "tests/hooks/"*.js \
+            "tests/installer/"*.js \
+            "tests/composition/"*.js \
+            "tests/smoke/"*.js
+
+  test-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r evals/requirements.txt
+      - run: python3 -m pytest tests/installer/ tests/unit/
+
+  sync-plugin-mirror:
+    needs: [test-node, test-python]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Mirror skills/ to plugins/
+        run: cp skills/no-glaze/SKILL.md plugins/no-glaze/skills/no-glaze/SKILL.md
+      - name: Commit mirror if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain plugins/)" ]; then
+            git add plugins/
+            git commit -m "chore(ci): sync skill mirror [skip ci]"
+            git push
+          fi
