@@ -1,0 +1,9 @@
+{
+  "name": "no-glaze",
+  "displayName": "no-glaze",
+  "shortDescription": "Strips sycophancy. Surfaces contradictions. Refuses confabulation.",
+  "longDescription": "Always-on engineering posture for Claude Code. Seven mechanisms in three intensity levels (lite/full/brutal, default brutal). Active on every tool call, every prompt, every response.",
+  "tags": ["productivity", "behavior", "engineering"],
+  "homepage": "https://github.com/thecandylane/no-glaze",
+  "license": "MIT"
+}

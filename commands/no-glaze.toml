@@ -1,0 +1,16 @@
+# Slash command stub for runtimes that consume TOML command definitions
+# (Codex, Gemini CLI). Behavior is implemented in the UserPromptSubmit hook
+# for Claude Code; this file is what other runtimes load.
+
+description = "Toggle no-glaze mode: /no-glaze [lite|full|brutal|stop|on|off]"
+prompt = """
+Toggle the no-glaze engineering posture. Default level on activation: brutal.
+
+Available subcommands:
+- /no-glaze           → activate at default level (brutal)
+- /no-glaze lite      → strip glaze only, no proactive critique
+- /no-glaze full      → strip + adversarial pushback + contradiction surfacing
+- /no-glaze brutal    → full + unprompted critique + bi-directional scope policing
+- /no-glaze stop      → deactivate
+- /no-glaze on        → reactivate at default level
+"""
