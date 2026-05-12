@@ -57,15 +57,52 @@ Adapter strategy: pass `--skill /path/to/no-glaze` explicitly rather than rely o
 
 **If no PostToolUse equivalent exists:** §3.1 degrades on Pi to skill-instruction-only (model must remember to compare against prior claims rather than be interrupted). Document as a Phase-1 Pi limitation in README, ship anyway, file an issue upstream.
 
-## `--mode json` event schema sample
+## `--mode json` event schema (empirically confirmed against Pi 0.74.0 + claude-sonnet-4-6)
 
-First emitted event on every session:
+Stream order per session:
 
-```json
-{"type":"session","version":3,"id":"<uuid>","timestamp":"<iso8601>","cwd":"<abspath>"}
+```
+session
+agent_start
+turn_start
+  message_start
+    message_update*   (token deltas — many per message)
+  message_end          (canonical per-message terminal event — use THIS)
+turn_end               (carries toolResults[] for the turn)
+agent_end              (carries full messages[] for the agent's whole run)
 ```
 
-Other event types observed/expected (to be confirmed once API key is set): `message`, `tool_call`, `tool_result`, `error`. Adapter must tolerate unknown `type` values.
+**`message_end` is the event the adapter consumes.** Shape:
+
+```json
+{"type": "message_end",
+ "message": {
+   "role": "user" | "assistant" | "toolResult",
+   "content": [<block>, ...],
+   // toolResult-only fields:
+   "toolCallId": "toolu_...",
+   "toolName": "read",
+   "isError": false
+ }}
+```
+
+Content blocks observed:
+
+- `{"type": "text", "text": "..."}` — plain model text or tool-result text
+- `{"type": "thinking", "thinking": "...", "thinkingSignature": "..."}` — reasoning trace
+- `{"type": "toolCall", "id": "toolu_...", "name": "read", "arguments": {...}}` —
+  **embedded inside assistant message content**, not a separate `tool_call` event
+
+The adapter (`evals/petri-pi-adapter.py`) iterates `message_end` events and
+flattens each to `{role, content}` where content is a string (text blocks
+joined with newlines; thinking and toolCall blocks JSON-encoded). The
+`toolResult` role is renamed to `tool` in the output and gains
+`tool_call_id` / `tool_name` / `is_error` fields for judge-side linkage.
+
+**§10 gate criterion 5 update:** tool execution is observable. Every tool call
+produces a paired `toolCall` block (inside an assistant `message_end`) and a
+`toolResult` `message_end` with `toolCallId` linking them. This is
+sufficient surface for Phase 1's contradiction-surfacing logic.
 
 ## API key requirement
 
