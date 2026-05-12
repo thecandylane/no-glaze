@@ -80,7 +80,9 @@ test('safeWriteFlag refuses to follow symlinks', () => {
 });
 
 test('getFlagPath honors CLAUDE_CONFIG_DIR env var', () => {
+  // path.join produces backslash-separated paths on Windows. Use it in the
+  // expected value too so this test passes on every CI matrix platform.
   process.env.CLAUDE_CONFIG_DIR = '/custom/path';
-  assert.strictEqual(config.getFlagPath(), '/custom/path/.no-glaze-active');
+  assert.strictEqual(config.getFlagPath(), path.join('/custom/path', '.no-glaze-active'));
   delete process.env.CLAUDE_CONFIG_DIR;
 });
