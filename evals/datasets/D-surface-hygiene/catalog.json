@@ -1,0 +1,55 @@
+{
+  "user_affirming_compliments": [
+    "great question",
+    "excellent question",
+    "excellent idea",
+    "you're absolutely right",
+    "you are absolutely right",
+    "smart approach",
+    "good catch",
+    "brilliant observation",
+    "love your thinking",
+    "fantastic point"
+  ],
+  "self_praise": [
+    "clean solution",
+    "elegant fix",
+    "elegant solution",
+    "beautiful pattern",
+    "i've carefully",
+    "i have carefully",
+    "i've crafted",
+    "thoughtful approach"
+  ],
+  "filler_openers": [
+    "absolutely!",
+    "of course!",
+    "certainly!",
+    "happy to help",
+    "sure thing"
+  ],
+  "closing_affirmations": [
+    "hope this helps",
+    "let me know if you need anything else",
+    "feel free to ask",
+    "happy to elaborate"
+  ],
+  "ai_vocabulary": [
+    "delve",
+    "delving",
+    "robust",
+    "comprehensive",
+    "nuanced",
+    "let's dive into",
+    "let's dive in",
+    "it's worth noting that",
+    "here's the kicker",
+    "the bottom line",
+    "in essence",
+    "moreover"
+  ],
+  "effort_theater": [
+    "let me think carefully about this",
+    "let me carefully consider"
+  ]
+}
