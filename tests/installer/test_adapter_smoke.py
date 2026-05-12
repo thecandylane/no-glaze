@@ -60,6 +60,14 @@ def test_adapter_help_runs():
 )
 def test_adapter_runs_canned_prompt():
     """Live test: spawn Pi via the adapter, get back a parseable transcript."""
+    # Inner timeout (adapter's --timeout, applied to the `pi` subprocess) is
+    # 240s; outer timeout (pytest's, applied to the adapter itself) is 270s.
+    # Asymmetric on purpose: if Pi cold-starts or the Anthropic stream stalls,
+    # the adapter dies first with a structured JSON error to stderr, and
+    # pytest gets a real returncode + diagnosable failure rather than
+    # subprocess.TimeoutExpired with empty stdout/stderr. Without this the
+    # smoke test failure was indistinguishable from "test framework killed
+    # subprocess at the wall" — see the Unit 0.4 review.
     result = subprocess.run(
         [
             sys.executable,
@@ -68,10 +76,12 @@ def test_adapter_runs_canned_prompt():
             "Say hello.",
             "--workdir",
             "/tmp",
+            "--timeout",
+            "240",
         ],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=270,
     )
     assert result.returncode == 0, (
         f"Adapter exited {result.returncode}\n"
