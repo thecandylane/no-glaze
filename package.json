@@ -1,0 +1,14 @@
+{
+  "name": "no-glaze",
+  "version": "0.1.0",
+  "description": "Always-on engineering posture: strips sycophancy, surfaces contradictions, refuses confabulation.",
+  "license": "MIT",
+  "repository": "github:thecandylane/no-glaze",
+  "bin": {
+    "no-glaze-install": "./bin/install.js"
+  },
+  "scripts": {
+    "test": "node --test tests/hooks/ tests/installer/",
+    "eval": "python3 evals/run.py"
+  }
+}
