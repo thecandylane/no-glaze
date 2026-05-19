@@ -15,7 +15,7 @@ pip install -r evals/requirements.txt
 Node hooks + installer + composition + smoke:
 
 ```bash
-node --test "tests/hooks/*.js" "tests/installer/*.js" "tests/composition/*.js" "tests/smoke/*.js"
+node --test "tests/hooks/"*.js "tests/installer/"*.js "tests/composition/"*.js "tests/smoke/"*.js
 ```
 
 Python scanner + scorer + adapter:

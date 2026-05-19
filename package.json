@@ -8,7 +8,7 @@
     "no-glaze-install": "./bin/install.js"
   },
   "scripts": {
-    "test": "node --test tests/hooks/ tests/installer/",
+    "test": "node --test \"tests/hooks/\"*.js \"tests/installer/\"*.js \"tests/composition/\"*.js \"tests/smoke/\"*.js",
     "eval": "python3 evals/run.py"
   }
 }
