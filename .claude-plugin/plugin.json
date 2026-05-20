@@ -1,16 +1,19 @@
 {
   "name": "no-glaze",
-  "version": "0.1.0",
   "description": "Always-on engineering posture: strips sycophancy, surfaces contradictions, refuses confabulation.",
-  "skills": ["./plugins/no-glaze/skills/no-glaze"],
-  "hooks": {
-    "SessionStart": "./src/hooks/no-glaze-activate.js",
-    "UserPromptSubmit": "./src/hooks/no-glaze-mode-tracker.js",
-    "PostToolUse": {
-      "matcher": "Read|Grep|Glob|Bash|WebFetch|WebSearch",
-      "command": "./src/hooks/no-glaze-tool-watcher.js"
-    }
+  "version": "0.1.1",
+  "author": {
+    "name": "thecandylane",
+    "url": "https://github.com/thecandylane"
   },
-  "statusLine": "./src/hooks/no-glaze-statusline.sh",
-  "commands": ["./commands/no-glaze.toml"]
+  "homepage": "https://github.com/thecandylane/no-glaze",
+  "repository": "https://github.com/thecandylane/no-glaze",
+  "license": "MIT",
+  "keywords": [
+    "productivity",
+    "behavior",
+    "engineering",
+    "sycophancy",
+    "agent-posture"
+  ]
 }

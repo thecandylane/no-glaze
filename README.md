@@ -30,24 +30,30 @@ LLMs are trained to be agreeable because users prefer agreeable responses. In en
 
 ## Install
 
+Recommended — Claude Code plugin (cross-platform: Windows, macOS, Linux, WSL, ARM):
+
+```text
+/plugin marketplace add thecandylane/no-glaze
+/plugin install no-glaze@no-glaze
+```
+
+This installs hooks + skill + slash command without touching `settings.json`.
+
+Alternative — hooks-only shell installer (adds the `[NO-GLAZE:BRUTAL]` statusline badge):
+
 ```bash
 curl -sSL https://github.com/thecandylane/no-glaze/raw/main/install.sh | bash
 ```
 
-Or, in a cloned repo:
+Windows:
 
-```bash
+```powershell
 git clone https://github.com/thecandylane/no-glaze
 cd no-glaze
-./install.sh
+./install.ps1
 ```
 
-The installer:
-
-1. Copies hook scripts into `$CLAUDE_CONFIG_DIR/hooks/` (defaults to `~/.claude/hooks/`).
-2. Merges hook entries into `settings.json` (JSONC-tolerant; comments do not crash the merge).
-3. Adds the statusline badge command.
-4. Activates at level **brutal** on the next Claude Code session start.
+Either path activates at level **brutal** on the next Claude Code session start. Don't run both — hooks will fire twice. See [INSTALL.md](INSTALL.md) for full details.
 
 ## Use
 

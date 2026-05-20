@@ -4,7 +4,7 @@ Maintainer instructions for the no-glaze repository.
 
 ## Single sources of truth
 
-- `skills/no-glaze/SKILL.md` — the LLM-facing behavior spec. Edit ONLY here for behavior changes. `plugins/no-glaze/skills/no-glaze/SKILL.md` is a CI-mirrored copy.
+- `skills/no-glaze/SKILL.md` — the LLM-facing behavior spec. Edit ONLY here for behavior changes. Claude Code plugin discovery reads this path directly via convention.
 - `src/rules/no-glaze-activate.md` — rule body for runtimes without hook lifecycle. Keep in sync with SKILL.md.
 - `src/hooks/*.js` and `src/hooks/*.sh|ps1` — hook implementations.
 - `bin/install.js` `PROVIDERS` array — single source for which agents are supported. Phase 2 adds entries here.

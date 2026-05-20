@@ -1,9 +1,24 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "no-glaze",
-  "displayName": "no-glaze",
-  "shortDescription": "Strips sycophancy. Surfaces contradictions. Refuses confabulation.",
-  "longDescription": "Always-on engineering posture for Claude Code. Seven mechanisms in three intensity levels (lite/full/brutal, default brutal). Active on every tool call, every prompt, every response.",
-  "tags": ["productivity", "behavior", "engineering"],
-  "homepage": "https://github.com/thecandylane/no-glaze",
-  "license": "MIT"
+  "description": "Always-on engineering posture: strips sycophancy, surfaces contradictions, refuses confabulation.",
+  "owner": {
+    "name": "thecandylane",
+    "url": "https://github.com/thecandylane"
+  },
+  "plugins": [
+    {
+      "name": "no-glaze",
+      "description": "Strips sycophancy. Surfaces contradictions. Refuses confabulation.",
+      "version": "0.1.1",
+      "source": "./",
+      "author": {
+        "name": "thecandylane",
+        "url": "https://github.com/thecandylane"
+      },
+      "homepage": "https://github.com/thecandylane/no-glaze",
+      "license": "MIT",
+      "category": "productivity"
+    }
+  ]
 }
