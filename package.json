@@ -4,6 +4,9 @@
   "description": "Always-on engineering posture: strips sycophancy, surfaces contradictions, refuses confabulation.",
   "license": "MIT",
   "repository": "github:thecandylane/no-glaze",
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "no-glaze-install": "./bin/install.js"
   },

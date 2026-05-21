@@ -1,13 +1,18 @@
 node_modules/
 __pycache__/
 *.pyc
+.pytest_cache/
 .venv/
 venv/
 dist/
 .DS_Store
 *.log
 evals/.cache/
-evals/results/
+
+# Eval run artifacts are local-only — except the hand-audit, which is the
+# committed v0.1.0 evidence (raw transcripts can leak local paths).
+evals/results/*
+!evals/results/HAND_AUDIT-v0.1.0.md
 
 # Personal / operational maintainer notes — not for public repo.
 SHIPPING.md

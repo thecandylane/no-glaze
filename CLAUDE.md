@@ -9,6 +9,7 @@ Maintainer instructions for the no-glaze repository.
 - `src/hooks/*.js` and `src/hooks/*.sh|ps1` — hook implementations.
 - `bin/install.js` `PROVIDERS` array — single source for which agents are supported. Phase 2 adds entries here.
 - `evals/datasets/A/B/C/D` — eval dataset truth.
+- `docs/DESIGN.md` — the design spec (v3). All `spec §N` references in this file point to its numbered sections.
 
 ## Hook safety contract
 

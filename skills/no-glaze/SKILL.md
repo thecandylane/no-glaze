@@ -1,5 +1,6 @@
 ---
 name: no-glaze
+argument-hint: "[lite|full|brutal|stop|on]"
 description: >
   Always-on engineering posture. Strips sycophancy and adds the behaviors it hides:
   refusing to confabulate, surfacing contradictions when tool results disagree with

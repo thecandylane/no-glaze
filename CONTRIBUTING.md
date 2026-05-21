@@ -43,7 +43,7 @@ Requires `$ANTHROPIC_API_KEY` for Petri's auditor / judge models AND for Pi to d
 ## What's not in scope
 
 - Behavioral changes that don't have an eval signal supporting them.
-- Adding mechanisms that aren't in the spec without first updating the spec.
+- Adding mechanisms that aren't in the design spec (`docs/DESIGN.md`) without first updating it.
 - "Soft" mechanisms (e.g., "be polite") — that's the failure mode this skill exists to prevent.
 
 ## PR rules

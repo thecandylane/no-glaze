@@ -57,9 +57,9 @@ Either path activates at level **brutal** on the next Claude Code session start.
 
 ## Use
 
-After install, no-glaze is active on every Claude Code session. Toggle via slash commands or natural language:
+After install, no-glaze is active on every Claude Code session. It's one command — `/no-glaze` — that takes an optional level argument. The slash menu autocompletes `/no-glaze`; the level argument and the natural-language forms are parsed by the prompt hook, so all of these work:
 
-| Command | Effect |
+| Type this | Effect |
 |---------|--------|
 | `/no-glaze` | Activate at default (brutal) |
 | `/no-glaze lite` | Switch to lite |
@@ -81,6 +81,31 @@ Statusline shows the current level: `[NO-GLAZE:BRUTAL]` (red), `[NO-GLAZE:FULL]`
 
 The personal-vs-work boundary is a hard rule at all levels: the skill never insults the user, only critiques the work.
 
+## Evidence
+
+no-glaze isn't a vibes claim. v0.1.0 was measured against four eval datasets and hand-audited transcript-by-transcript.
+
+**Hand-audited composite: 94.05 / 100** (N=39 completed prompts)
+
+| Dataset | Measures | Score |
+|---|---|---|
+| A — confabulation refusal | refuses to invent fake APIs; checks before asserting | 85.71 |
+| B — sycophancy traps | corrects wrong claims; no manufactured pushback on right ones | 93.33 |
+| C — contradiction-in-loop | surfaces contradictions when tool output disagrees with a claim | 100.00 |
+| D — surface hygiene | zero banned glaze phrases | 100.00 |
+
+On the v0.1.0 baseline run, concretely:
+
+- **7/7** fabricated-API prompts refused — model did not invent the parameter.
+- **9/9** wrong technical claims received a substantive correction.
+- **0/9** correct claims received manufactured pushback.
+- **5/5** contradiction scenarios surfaced; **0/2** controls produced a false contradiction.
+- **0** banned phrases across ~24k tokens of assistant output.
+
+The pipeline's regex graders undercount Dataset B — the word "actually" reads as pushback even in clean agreements — so the pipeline reports 89.60. The **94.05** figure is the hand audit, and it's the honest number. Full transcript-by-transcript reasoning: [`evals/results/HAND_AUDIT-v0.1.0.md`](evals/results/HAND_AUDIT-v0.1.0.md). v0.1.1's planned LLM judge will reproduce the audited number natively.
+
+Design rationale for every mechanism: [`docs/DESIGN.md`](docs/DESIGN.md).
+
 ## Auto-clarity
 
 The skill drops its adversarial posture briefly during sensitive moments: security warnings, irreversible action confirmations, user-in-distress moments (lost work, broke prod), teaching/clarification mode. Glaze removal stays active — no fake comfort either.
@@ -90,6 +115,14 @@ The skill drops its adversarial posture briefly during sensitive moments: securi
 Both can be active simultaneously. Caveman compresses prose; no-glaze removes sycophancy. Content produced by no-glaze mechanisms (contradiction surfaces, capitulation explanations) is exempt from caveman compression; surrounding prose stays compressed.
 
 ## Uninstall
+
+Plugin install:
+
+```text
+/plugin uninstall no-glaze
+```
+
+Hooks-only install:
 
 ```bash
 ./install.sh --uninstall
